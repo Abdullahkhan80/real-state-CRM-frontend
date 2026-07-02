@@ -1,22 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import AppSidebar from "@/components/app-sidebar";
-import { ThemeProvider } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Real CRM – Real Estate Lead Management",
-  description: "Dashboard for managing real estate leads, communications, and Meta Lead Ads integrations.",
+  title: "NexaEstate CRM",
+  description: "AI-powered real estate CRM for lead tracking, agent workflows, and n8n webhooks.",
 };
 
 export default function RootLayout({
@@ -25,19 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
-      suppressHydrationWarning
-    >
-      <body className="min-h-screen bg-background text-foreground antialiased">
-        <ThemeProvider>
-          <AppSidebar />
-          <main className="ml-56 min-h-screen p-8">
-            {children}
-          </main>
-        </ThemeProvider>
-      </body>
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
