@@ -38,6 +38,8 @@ export function CrmDashboard() {
   const [form, setForm] = useState<LeadForm>(blankLeadForm);
   const [syncMessage, setSyncMessage] = useState("Demo data active until the API responds.");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverStatus, setDragOverStatus] = useState<LeadStatus | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -127,9 +129,54 @@ export function CrmDashboard() {
     [leads]
   );
 
+  const boardLanes = useMemo(
+    () =>
+      (["NEW", "CONTACTED", "CONVERTED", "LOST"] as LeadStatus[]).map((status) => {
+        const laneLeads = filteredLeads.filter((lead) => lead.status === status);
+        const value = laneLeads.reduce((sum, lead) => sum + lead.value, 0);
+        return { status, leads: laneLeads, count: laneLeads.length, value };
+      }),
+    [filteredLeads]
+  );
+
   const updateForm = <K extends keyof LeadForm>(field: K, value: LeadForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  async function moveLeadToStatus(leadId: string, status: LeadStatus) {
+    const target = leads.find((lead) => lead.id === leadId);
+    if (!target || target.status === status) return;
+
+    // Optimistic move — mirror the create-lead handler: keep the local change
+    // even when the backend is offline or rejects, but report it honestly.
+    setLeads((current) => current.map((lead) => (lead.id === leadId ? { ...lead, status } : lead)));
+
+    try {
+      const response = await fetch(`${apiBase}/leads/${leadId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        setApiState("connected");
+        setSyncMessage(`${target.name} moved to ${statusStyles[status].label}.`);
+      } else {
+        setApiState("offline");
+        setSyncMessage(`${target.name} moved locally. Backend rejected the status change.`);
+      }
+    } catch {
+      setApiState("offline");
+      setSyncMessage(`${target.name} moved locally. Backend is offline.`);
+    }
+  }
+
+  function handleDrop(status: LeadStatus) {
+    const id = draggedId;
+    setDraggedId(null);
+    setDragOverStatus(null);
+    if (id) void moveLeadToStatus(id, status);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -256,6 +303,110 @@ export function CrmDashboard() {
                     </div>
                   </article>
                 ))}
+              </div>
+            </section>
+  );
+
+  const boardSection = (
+            <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm md:p-5">
+              <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-zinc-950">Lead board</h2>
+                  <p className="text-sm text-zinc-500">Drag a lead between lanes to update its stage. {syncMessage}</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[1fr_160px] xl:w-[520px]">
+                  <label className="relative block">
+                    <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <input
+                      className="h-11 w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                      placeholder="Search leads"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                    />
+                  </label>
+                  <select
+                    className="h-11 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                    value={selectedSource}
+                    onChange={(event) => setSelectedSource(event.target.value as LeadSource | "ALL")}
+                  >
+                    <option value="ALL">All sources</option>
+                    {Object.entries(sourceStyles).map(([source, meta]) => (
+                      <option key={source} value={source}>
+                        {meta.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-4">
+                {boardLanes.map((lane) => {
+                  const style = statusStyles[lane.status];
+                  const isTarget = dragOverStatus === lane.status;
+                  return (
+                    <div
+                      key={lane.status}
+                      className={`flex min-h-[260px] flex-col rounded-lg border p-3 transition ${style.lane} ${
+                        isTarget ? "ring-2 ring-teal-500/60" : ""
+                      }`}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        if (dragOverStatus !== lane.status) setDragOverStatus(lane.status);
+                      }}
+                      onDragLeave={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+                          setDragOverStatus((current) => (current === lane.status ? null : current));
+                        }
+                      }}
+                      onDrop={() => handleDrop(lane.status)}
+                    >
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
+                          <p className="text-sm font-semibold text-zinc-900">{style.label}</p>
+                        </div>
+                        <span className="rounded-full bg-white px-2 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200">
+                          {lane.count}
+                        </span>
+                      </div>
+                      <p className="mb-3 text-sm font-semibold tracking-tight text-zinc-700">{formatCurrency(lane.value)}</p>
+
+                      <div className="flex-1 space-y-2">
+                        {lane.leads.map((lead) => (
+                          <article
+                            key={lead.id}
+                            draggable
+                            onDragStart={() => setDraggedId(lead.id)}
+                            onDragEnd={() => {
+                              setDraggedId(null);
+                              setDragOverStatus(null);
+                            }}
+                            className={`cursor-grab rounded-lg bg-white p-3 ring-1 ring-zinc-200 transition active:cursor-grabbing hover:ring-zinc-300 ${
+                              draggedId === lead.id ? "opacity-50" : ""
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="min-w-0 truncate text-sm font-medium text-zinc-900">{lead.name}</p>
+                              <span className="shrink-0 text-xs font-semibold text-teal-700">{lead.score}</span>
+                            </div>
+                            <p className="mt-1 truncate text-xs text-zinc-500">
+                              {lead.propertyType} · {lead.area}
+                            </p>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <Badge className={sourceStyles[lead.source].badge}>{sourceStyles[lead.source].label}</Badge>
+                              <span className="text-xs font-semibold text-zinc-700">{formatCurrency(lead.value)}</span>
+                            </div>
+                          </article>
+                        ))}
+                        {lane.count === 0 && (
+                          <p className="rounded-lg border border-dashed border-zinc-300 px-3 py-6 text-center text-xs text-zinc-400">
+                            Drop leads here
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
   );
@@ -606,6 +757,7 @@ export function CrmDashboard() {
           </>
         )}
         {activeTab === "leads" && leadDeskSection}
+        {activeTab === "board" && boardSection}
         {activeTab === "create" && (
           <div className="mx-auto w-full max-w-2xl">{addLeadSection}</div>
         )}

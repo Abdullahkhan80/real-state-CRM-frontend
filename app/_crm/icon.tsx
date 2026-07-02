@@ -14,6 +14,9 @@ export function Icon({ name, className = "h-4 w-4", ...props }: { name: IconName
     case "agent":
       content = <><path d="M8 9a4 4 0 0 1 8 0v3a4 4 0 0 1-8 0V9Z" /><path d="M12 2v3M7 21h10M9 16l-2 5M15 16l2 5" /></>;
       break;
+    case "board":
+      content = <><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="9.5" y="4" width="5" height="11" rx="1" /><rect x="16" y="4" width="5" height="14" rx="1" /></>;
+      break;
     case "call":
       content = <path d="M6 5c4 8 5 9 13 13l-3 3c-8-3-13-8-16-16l3-3 3 3Z" />;
       break;

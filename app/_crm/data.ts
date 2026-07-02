@@ -75,6 +75,7 @@ export type IconName =
   | "activity"
   | "add"
   | "agent"
+  | "board"
   | "call"
   | "check"
   | "clock"
@@ -89,11 +90,12 @@ export type IconName =
   | "spark"
   | "target";
 
-export type Tab = "dashboard" | "leads" | "create" | "agents" | "activity" | "integrations";
+export type Tab = "dashboard" | "leads" | "board" | "create" | "agents" | "activity" | "integrations";
 
 export const navItems: { id: Tab; label: string; icon: IconName }[] = [
   { id: "dashboard", label: "Dashboard", icon: "home" },
   { id: "leads", label: "Leads", icon: "lead" },
+  { id: "board", label: "Board", icon: "board" },
   { id: "create", label: "Add lead", icon: "add" },
   { id: "agents", label: "AI agents", icon: "agent" },
   { id: "activity", label: "Activity", icon: "activity" },
