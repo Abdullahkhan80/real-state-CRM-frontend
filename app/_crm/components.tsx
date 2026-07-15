@@ -1,22 +1,18 @@
 import { ReactNode, useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ApiState, DashboardMetrics, IconName, Tab, Lead, LeadStatus, LeadSource } from "./data";
 import { navItems, sourceStyles, statusStyles, formatCurrency, formatNumber } from "./data";
 import { Icon } from "./icon";
+export { Icon };
+import { useCrm } from "./context";
 
 export function Shell({
   children,
-  apiState,
-  metrics,
-  activeTab,
-  onTabChange,
   theme,
   onToggleTheme,
 }: {
   children: ReactNode;
-  apiState: ApiState;
-  metrics: DashboardMetrics;
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
   theme: "dark" | "light";
   onToggleTheme: () => void;
 }) {
@@ -24,6 +20,21 @@ export function Shell({
   
   // Persisted state for sidebar expand / collapse
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  
+  const pathname = usePathname();
+  const activeTab: Tab = (pathname?.split("/").pop() || "dashboard") as Tab;
+
+  const {
+    metrics,
+    apiState,
+    selectedLead,
+    isDrawerOpen,
+    setIsDrawerOpen,
+    setSelectedLead,
+    handleUpdateStatus,
+    handleSendMessage,
+    handleToggleAi
+  } = useCrm();
 
   useEffect(() => {
     const userStr = localStorage.getItem("nexa_user");
@@ -99,19 +110,18 @@ export function Shell({
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
+                  href={`/crm/${item.id}`}
                   className={`flex h-10 w-full items-center gap-3 rounded-xl px-3.5 text-xs font-bold transition duration-150 cursor-pointer text-left ${
                     isActive
                       ? "bg-violet-600 text-white shadow-md shadow-violet-900/20"
                       : "text-[var(--text-muted)] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[var(--text-title)]"
                   }`}
-                  type="button"
                 >
                   <Icon name={item.icon} className="h-5 w-5 shrink-0" />
                   <span className="truncate">{item.label}</span>
-                </button>
+                </Link>
               );
             })}
           </nav>
@@ -120,19 +130,18 @@ export function Shell({
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl transition duration-200 cursor-pointer ${
+                  href={`/crm/${item.id}`}
+                  className={`grid h-11 w-11 place-items-center rounded-full circular-nav-btn transition duration-200 cursor-pointer ${
                     isActive
                       ? "bg-violet-600 text-white shadow-lg shadow-violet-900/30"
                       : "text-[var(--text-muted)] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[var(--text-title)]"
                   }`}
                   title={item.label}
-                  type="button"
                 >
                   <Icon name={item.icon} className="h-5 w-5" />
-                </button>
+                </Link>
               );
             })}
           </nav>
@@ -274,19 +283,18 @@ export function Shell({
         {/* Tab Nav for Mobile Devices - Fixed */}
         <nav className="flex gap-1.5 overflow-x-auto premium-border-b bg-[var(--bg-sidebar)] px-3 py-2 xl:hidden shrink-0 transition-colors duration-200">
           {navItems.map((item) => (
-            <button
+            <Link
               key={item.id}
+              href={`/crm/${item.id}`}
               className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition cursor-pointer ${
                 activeTab === item.id
                   ? "bg-violet-600 text-white"
                   : "bg-[var(--bg-badge-neutral)] text-[var(--text-muted)] hover:bg-black/5 dark:hover:bg-white/5"
               }`}
-              type="button"
-              onClick={() => onTabChange(item.id)}
             >
               <Icon name={item.icon} className="h-3.5 w-3.5" />
               <span>{item.label}</span>
-            </button>
+            </Link>
           ))}
         </nav>
 
@@ -295,6 +303,19 @@ export function Shell({
           {children}
         </div>
       </div>
+
+      {/* Slide-out details drawer overlay (gated globally inside shell layout) */}
+      <LeadDetailsDrawer
+        lead={selectedLead}
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setSelectedLead(null);
+        }}
+        onUpdateStatus={handleUpdateStatus}
+        onSendMessage={handleSendMessage}
+        onToggleAi={handleToggleAi}
+      />
     </main>
   );
 }

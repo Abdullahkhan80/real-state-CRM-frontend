@@ -1,24 +1,24 @@
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
-import { CrmDashboard } from "./_crm/dashboard";
+import { useRouter } from "next/navigation";
 import { apiBase } from "./_crm/data";
 import { Icon } from "./_crm/icon";
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Check if we are already logged in from localStorage
   useEffect(() => {
     const token = localStorage.getItem("nexa_token");
     if (token) {
-      setIsAuthenticated(true);
+      router.replace("/crm/dashboard");
     }
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,7 +38,7 @@ export default function Home() {
       if (response.ok && payload.success) {
         localStorage.setItem("nexa_token", payload.data?.accessToken || "demo-token");
         localStorage.setItem("nexa_user", JSON.stringify(payload.data?.user || { name: "System Admin", role: "ADMIN" }));
-        setIsAuthenticated(true);
+        router.replace("/crm/dashboard");
       } else {
         setError(payload.message || "Invalid credentials. Please try again.");
       }
@@ -48,11 +48,11 @@ export default function Home() {
       if (email === "admin@nexaestate.local" && password === "ChangeMe!2026") {
         localStorage.setItem("nexa_token", "demo-token-12345");
         localStorage.setItem("nexa_user", JSON.stringify({ name: "System Admin", role: "ADMIN", email }));
-        setIsAuthenticated(true);
+        router.replace("/crm/dashboard");
       } else if (email === "demo@nexaestate.local") {
         localStorage.setItem("nexa_token", "demo-token-67890");
         localStorage.setItem("nexa_user", JSON.stringify({ name: "Demo User", role: "SALES_AGENT", email }));
-        setIsAuthenticated(true);
+        router.replace("/crm/dashboard");
       } else {
         setError("Could not connect to backend. Use credentials: admin@nexaestate.local / ChangeMe!2026");
       }
@@ -71,14 +71,10 @@ export default function Home() {
         localStorage.setItem("nexa_token", "demo-token-agent");
         localStorage.setItem("nexa_user", JSON.stringify({ name: "Sara Khan", role: "SALES_AGENT", email: "sara@nexaestate.local" }));
       }
-      setIsAuthenticated(true);
+      router.replace("/crm/dashboard");
       setLoading(false);
     }, 800);
   };
-
-  if (isAuthenticated) {
-    return <CrmDashboard />;
-  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#090d16] font-sans text-zinc-100">

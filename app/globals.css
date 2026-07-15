@@ -101,6 +101,11 @@ a {
   border-left: 1px solid var(--border-color) !important;
 }
 
+/* Circular active indicators utility */
+.circular-nav-btn {
+  border-radius: 9999px !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
