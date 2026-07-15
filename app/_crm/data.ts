@@ -20,6 +20,11 @@ export type Lead = {
   createdAt: string;
   notes?: string;
   communicationCount?: number;
+  lostReason?: string;
+  aiPaused?: boolean;
+  callRecordingUrl?: string;
+  callTranscript?: { sender: "AI" | "Customer"; text: string; time: string }[];
+  chatHistory?: { sender: "AI" | "Lead" | "Agent"; text: string; time: string }[];
 };
 
 export type LeadForm = {
@@ -51,6 +56,18 @@ export type BackendLead = {
 export type LeadsResponse = {
   success: boolean;
   data?: BackendLead[];
+};
+
+export type LeadImportResponse = {
+  success: boolean;
+  message?: string;
+  data?: {
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: { row: number; message: string }[];
+    leads: BackendLead[];
+  };
 };
 
 export type DashboardMetrics = {
@@ -88,14 +105,18 @@ export type IconName =
   | "search"
   | "shield"
   | "spark"
-  | "target";
+  | "target"
+  | "upload"
+  | "sun"
+  | "moon";
 
-export type Tab = "dashboard" | "leads" | "board" | "create" | "agents" | "activity" | "integrations";
+export type Tab = "dashboard" | "leads" | "board" | "analytics" | "create" | "agents" | "activity" | "integrations";
 
 export const navItems: { id: Tab; label: string; icon: IconName }[] = [
   { id: "dashboard", label: "Dashboard", icon: "home" },
   { id: "leads", label: "Leads", icon: "lead" },
   { id: "board", label: "Board", icon: "board" },
+  { id: "analytics", label: "Analytics", icon: "target" },
   { id: "create", label: "Add lead", icon: "add" },
   { id: "agents", label: "AI agents", icon: "agent" },
   { id: "activity", label: "Activity", icon: "activity" },
@@ -156,6 +177,15 @@ export const demoLeads: Lead[] = [
     nextAction: "Send Bahria and DHA shortlist",
     createdAt: "2026-06-28T06:15:00.000Z",
     communicationCount: 7,
+    aiPaused: false,
+    chatHistory: [
+      { sender: "Lead", text: "Hi, I saw your ad about the DHA Phase 6 apartments. Are there any 3-beds left?", time: "06:15" },
+      { sender: "AI", text: "Hello Ayesha! Yes, we have a few premium 3-bedroom options available. To help me find the best fit, could you share your approximate budget range?", time: "06:16" },
+      { sender: "Lead", text: "My budget is around 170k to 190k USD.", time: "06:18" },
+      { sender: "AI", text: "Perfect, that budget works well for DHA Phase 6! Are you looking for immediate possession or a flexible payment plan?", time: "06:19" },
+      { sender: "Lead", text: "Preferably ready to move in, but a short payment plan works too.", time: "06:22" },
+      { sender: "AI", text: "Great. I have logged these preferences. Agent Sara Khan will reach out shortly with a curated shortlist. Have a wonderful day!", time: "06:23" }
+    ]
   },
   {
     id: "lead-002",
@@ -174,6 +204,10 @@ export const demoLeads: Lead[] = [
     nextAction: "AI follow-up message pending",
     createdAt: "2026-06-28T05:30:00.000Z",
     communicationCount: 2,
+    aiPaused: false,
+    chatHistory: [
+      { sender: "AI", text: "Hello Hamza! Thanks for your interest in our Bahria Town plot files. How can we help you today?", time: "05:30" }
+    ]
   },
   {
     id: "lead-003",
@@ -192,6 +226,25 @@ export const demoLeads: Lead[] = [
     nextAction: "Prepare booking token invoice",
     createdAt: "2026-06-27T15:05:00.000Z",
     communicationCount: 11,
+    aiPaused: true,
+    callRecordingUrl: "/mock-recordings/call-003.mp3",
+    callTranscript: [
+      { sender: "AI", text: "Hello, am I speaking with Bilal Qureshi?", time: "0:02" },
+      { sender: "Customer", text: "Yes, this is Bilal. Who is this?", time: "0:05" },
+      { sender: "AI", text: "Hi Bilal! This is NexaEstate's AI assistant. I'm calling about your inquiry regarding the commercial shop in Gulberg Greens. Is this a good time to talk?", time: "0:12" },
+      { sender: "Customer", text: "Yes, I was actually looking at that shop. What's the size and total price?", time: "0:19" },
+      { sender: "AI", text: "It's a premium corner shop, 450 square feet, priced at 365,000 USD, with a 20% down payment. Are you looking to buy this for investment or your own retail outlet?", time: "0:30" },
+      { sender: "Customer", text: "It's for my own brand's retail outlet. Can I visit the site tomorrow?", time: "0:36" },
+      { sender: "AI", text: "Absolutely, I can schedule that. Would tomorrow afternoon at 3:00 PM work for you, or is morning better?", time: "0:45" },
+      { sender: "Customer", text: "3:00 PM is perfect.", time: "0:48" },
+      { sender: "AI", text: "Great. I have booked your site visit for tomorrow at 3:00 PM. Our Gulberg Greens expert Mina Shah will meet you there. I will SMS you the exact shop location now.", time: "1:02" },
+      { sender: "Customer", text: "Thanks, appreciate it.", time: "1:05" }
+    ],
+    chatHistory: [
+      { sender: "AI", text: "Hi Bilal, this is the Gulberg Greens location map link for our appointment tomorrow at 3:00 PM: [Location Map]. Mina Shah will meet you at the site.", time: "15:06" },
+      { sender: "Lead", text: "Received, thank you. I'm on my way now.", time: "14:45" },
+      { sender: "Agent", text: "Hi Bilal, I'm at the site. Looking forward to meeting you.", time: "14:55" }
+    ]
   },
   {
     id: "lead-004",
@@ -210,6 +263,14 @@ export const demoLeads: Lead[] = [
     nextAction: "Schedule video walkthrough",
     createdAt: "2026-06-27T12:20:00.000Z",
     communicationCount: 8,
+    aiPaused: false,
+    chatHistory: [
+      { sender: "Lead", text: "Interested in the 4-bed luxury villa in Lake City. Can you send details?", time: "12:20" },
+      { sender: "AI", text: "Hello Zoya! I'd love to share the brochure with you. Here is the PDF download link: [Lake City Villa Brochure]. The starting price for this villa series is 248,000 USD.", time: "12:21" },
+      { sender: "Lead", text: "Perfect. Does this include the club membership?", time: "12:25" },
+      { sender: "AI", text: "Yes! All bookings this month include a complimentary lifetime family club membership at Lake City Country Club.", time: "12:26" },
+      { sender: "Lead", text: "That is great. I will review the PDF tonight.", time: "12:35" }
+    ]
   },
   {
     id: "lead-005",
@@ -227,6 +288,14 @@ export const demoLeads: Lead[] = [
     nextAction: "Retarget when lower-price inventory opens",
     createdAt: "2026-06-26T09:42:00.000Z",
     communicationCount: 4,
+    aiPaused: true,
+    lostReason: "Budget Mismatch",
+    chatHistory: [
+      { sender: "Lead", text: "Hi, I am looking for a studio in City Centre under 60k.", time: "09:42" },
+      { sender: "AI", text: "Hello Omar! Thanks for reaching out. The standard studio apartments in City Centre start at 94k. Do you have any flexibility in budget, or would you be open to other areas nearby?", time: "09:43" },
+      { sender: "Lead", text: "No, 60k is my hard limit and I need City Centre.", time: "09:45" },
+      { sender: "Agent", text: "Hi Omar, Ali here. Unfortunately we don't have any inventory in City Centre matching that price right now. I will save your details and alert you immediately if any resale units matching your budget open up.", time: "10:10" }
+    ]
   },
   {
     id: "lead-006",
@@ -245,6 +314,10 @@ export const demoLeads: Lead[] = [
     nextAction: "Call AI to confirm requirements",
     createdAt: "2026-06-28T08:10:00.000Z",
     communicationCount: 1,
+    aiPaused: false,
+    chatHistory: [
+      { sender: "AI", text: "Hi Noor, sorry we missed your call. This is NexaEstate's AI assistant. Are you looking for a residential property or an investment in Bedian Road?", time: "08:11" }
+    ]
   },
 ];
 

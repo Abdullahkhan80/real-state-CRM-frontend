@@ -1,30 +1,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7f4;
-  --foreground: #18181b;
+  /* Default values (Dark Mode) */
+  --background: #080c14;
+  --foreground: #f4f4f5;
+  --bg-sidebar: #0b101b;
+  --bg-card: rgba(15, 21, 36, 0.6);
+  --bg-card-hover: #162035;
+  --bg-input: #0e1424;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --text-title: #ffffff;
+  --text-body: #d4d4d8;
+  --text-muted: #71717a;
+  --teal-accent: #0d9488;
+  --teal-accent-glow: rgba(13, 148, 136, 0.15);
+  --bg-lane: rgba(20, 27, 46, 0.25);
+  --bg-inner-input: #0e1424;
+  --bg-badge-neutral: rgba(255, 255, 255, 0.05);
+}
+
+html.light {
+  /* Light Mode Overrides */
+  --background: #f1f5f9;
+  --foreground: #1e293b;
+  --bg-sidebar: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: #e2e8f0;
+  --bg-input: #ffffff;
+  --border-color: rgba(15, 23, 42, 0.09);
+  --text-title: #0f172a;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --teal-accent: #0d9488;
+  --teal-accent-glow: rgba(13, 148, 136, 0.1);
+  --bg-lane: rgba(226, 232, 240, 0.65);
+  --bg-inner-input: #f8fafc;
+  --bg-badge-neutral: rgba(15, 23, 42, 0.05);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 body {
   min-width: 320px;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 button,
@@ -40,25 +80,116 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Premium Border utilities to bypass Tailwind v4 arbitrary lookup bugs */
+.premium-border {
+  border: 1px solid var(--border-color) !important;
+}
+
+.premium-border-t {
+  border-top: 1px solid var(--border-color) !important;
+}
+
+.premium-border-b {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.premium-border-r {
+  border-right: 1px solid var(--border-color) !important;
+}
+
+.premium-border-l {
+  border-left: 1px solid var(--border-color) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(128, 128, 128, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.3);
+}
+
+/* Premium form inputs styles */
 .field-input {
-  min-height: 44px;
+  min-height: 40px;
   width: 100%;
   border-radius: 0.5rem;
-  border: 1px solid rgb(228 228 231);
-  background: rgb(250 250 250);
-  padding: 0 0.75rem;
-  font-size: 0.875rem;
-  color: rgb(24 24 27);
+  border: 1px solid var(--border-color);
+  background: var(--bg-inner-input);
+  padding: 0 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--text-title);
   outline: none;
-  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .field-input:focus {
-  border-color: rgb(13 148 136);
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgb(20 184 166 / 0.12);
+  border-color: var(--teal-accent);
+  background: var(--bg-input);
+  box-shadow: 0 0 0 3px var(--teal-accent-glow);
 }
 
+/* Selection Highlight */
 ::selection {
-  background: rgb(20 184 166 / 0.22);
+  background: rgba(13, 148, 136, 0.3);
+  color: #ffffff;
+}
+
+/* Pulse animation keyframes */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.95);
+    box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.2);
+  }
+}
+
+.bot-pulse {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+/* Slide in drawer keyframes */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-slide-in {
+  animation: slideIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fade in elements keyframe */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
